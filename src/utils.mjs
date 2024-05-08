@@ -1,4 +1,5 @@
 import { warning } from '@actions/core';
+import {getLockfileVersionFromFile, parseNpmLockV2Project} from "snyk-nodejs-lockfile-parser"
 
 import semverCompare from 'semver/functions/compare.js';
 import semverCoerce from 'semver/functions/coerce.js';
@@ -40,7 +41,7 @@ const formatLockEntry = obj =>
       })
   );
 
-const detectYarnVersion = lines => {
+const detectNPMVersion = lines => {
   if (lines[1].includes('v1')) {
     return {
       version: 1,
@@ -153,42 +154,45 @@ const parseDependencyLine = dependencyLine => {
 };
 
 export const parseLock = content => {
-  const lines = content.replaceAll('\r', '').replaceAll('"', '').split('\n');
+  // console.log(content);
+  // const lines = content.replaceAll('\r', '').replaceAll('"', '').split('\n');
+  const packageLockVersion = content.lockfileVersion
+  // const metadata = detectNPMVersion(lines);
 
-  const metadata = detectYarnVersion(lines);
 
-  if (!metadata) {
-    warning('Unsupported Yarn lock version! Please report this issue in the action repository.');
+  if (!packageLockVersion) {
+    warning('Unsupported Package lock version! Please report this issue in the action repository.');
     return {
       type: 'error',
       object: {}
     };
   }
 
-  const cleanedLines = lines.slice(metadata.skipLines);
-  const maxIndex = cleanedLines.length - 1;
+  // const cleanedLines = lines.slice(metadata.skipLines);
+  // const maxIndex = cleanedLines.length - 1;
 
-  const entryChunks = [];
-  cleanedLines.reduce((previousValue, currentValue, currentIndex) => {
-    if (currentValue !== '' && currentIndex !== maxIndex) {
-      return [...previousValue, currentValue];
-    } else {
-      entryChunks.push([...previousValue, currentValue]);
-      return [];
-    }
-  }, []);
+  // const entryChunks = [];
+  // cleanedLines.reduce((previousValue, currentValue, currentIndex) => {
+  //   if (currentValue !== '' && currentIndex !== maxIndex) {
+  //     return [...previousValue, currentValue];
+  //   } else {
+  //     entryChunks.push([...previousValue, currentValue]);
+  //     return [];
+  //   }
+  // }, []);
 
-  const result = entryChunks
-    .filter(entryLines => entryLines.length >= 4)
-    .map(entryLines =>
-      metadata.version === 1 ? constructClassicEntry(entryLines) : constructBerryEntry(entryLines)
-    )
-    .filter(Boolean);
+  // const result = entryChunks
+  //   .filter(entryLines => entryLines.length >= 4)
+  //   .map(entryLines =>
+  //     metadata.version === 1 ? constructClassicEntry(entryLines) : constructBerryEntry(entryLines)
+  //   )
+  //   .filter(Boolean);
+
 
   // Retain the official parser result structure for a while
   return {
     type: 'success',
-    object: Object.assign({}, ...result)
+    object: Object.assign({})
   };
 };
 
